@@ -1,18 +1,19 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Product Management</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: Arial, sans-serif;
+      background: #f0f0f0;
       padding: 20px;
-      background-color: #f4f4f4;
     }
     h1 {
       color: #333;
+    }
+    form {
+      margin-bottom: 20px;
     }
     input, button {
       padding: 10px;
@@ -21,15 +22,19 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      background: white;
     }
     th, td {
+      padding: 12px;
       border: 1px solid #ccc;
-      padding: 10px;
-      text-align: center;
+      text-align: left;
     }
-    th {
-      background-color: #ddd;
+    .delete-btn {
+      background: red;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -37,11 +42,13 @@
 
   <h1>Product Management</h1>
 
-  <input type="text" id="productName" placeholder="Product Name">
-  <input type="number" id="productPrice" placeholder="Price">
-  <button onclick="addProduct()">Add Product</button>
+  <form id="productForm">
+    <input type="text" id="productName" placeholder="Product Name" required>
+    <input type="number" id="productPrice" placeholder="Price (₹)" required>
+    <button type="submit">Add Product</button>
+  </form>
 
-  <table>
+  <table id="productTable">
     <thead>
       <tr>
         <th>Name</th>
@@ -49,42 +56,56 @@
         <th>Action</th>
       </tr>
     </thead>
-    <tbody id="productList"></tbody>
+    <tbody></tbody>
   </table>
 
   <script>
+    const form = document.getElementById("productForm");
+    const tableBody = document.querySelector("#productTable tbody");
+
+    // ✅ Products को load करें localStorage से (refresh पर भी)
     let products = [];
 
-    function addProduct() {
-      const name = document.getElementById('productName').value;
-      const price = document.getElementById('productPrice').value;
-
-      if (name && price) {
-        products.push({ name, price });
-        renderProducts();
-        document.getElementById('productName').value = '';
-        document.getElementById('productPrice').value = '';
-      }
-    }
-
-    function deleteProduct(index) {
-      products.splice(index, 1);
+    function loadProducts() {
+      const stored = localStorage.getItem("products");
+      products = stored ? JSON.parse(stored) : [];
       renderProducts();
     }
 
     function renderProducts() {
-      const list = document.getElementById('productList');
-      list.innerHTML = '';
-      products.forEach((product, index) => {
-        list.innerHTML += `
-          <tr>
-            <td>${product.name}</td>
-            <td>${product.price}</td>
-            <td><button onclick="deleteProduct(${index})">Delete</button></td>
-          </tr>
+      tableBody.innerHTML = "";
+      products.forEach((p, i) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${p.name}</td>
+          <td>${p.price}</td>
+          <td><button class="delete-btn" onclick="deleteProduct(${i})">Delete</button></td>
         `;
+        tableBody.appendChild(row);
       });
     }
+
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      const name = document.getElementById("productName").value.trim();
+      const price = document.getElementById("productPrice").value.trim();
+
+      if (name && price) {
+        products.push({ name, price });
+        localStorage.setItem("products", JSON.stringify(products));
+        form.reset();
+        renderProducts();
+      }
+    };
+
+    function deleteProduct(index) {
+      products.splice(index, 1);
+      localStorage.setItem("products", JSON.stringify(products));
+      renderProducts();
+    }
+
+    // ✅ पहली बार पेज लोड पर डेटा लाएं
+    window.onload = loadProducts;
   </script>
 
 </body>
